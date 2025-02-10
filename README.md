@@ -1,4 +1,4 @@
-# YouTube Transcription Tool
+# ytotxt: YouTube to Text Transcription Tool
 
 A Flask web application that automatically transcribes YouTube videos to text using OpenAI's Whisper model. The tool provides real-time progress tracking, timestamps in transcriptions, and a clean interface for managing transcripts.
 
