@@ -79,6 +79,7 @@ Before you begin, ensure you have the following installed:
    - Start a new transcription or return to the main page
 
 ## Project Structure
+```
 youtube-transcription-tool/
 ├── app.py # Flask application and route handlers
 ├── yttotxt.py # Core transcription and YouTube download logic
@@ -87,6 +88,7 @@ youtube-transcription-tool/
 │ ├── index.html # Main page template
 │ └── result.html # Results page template
 └── downloads/ # Storage for downloaded files and transcripts
+```
 
 
 ## How It Works
