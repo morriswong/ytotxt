@@ -80,7 +80,7 @@ Before you begin, ensure you have the following installed:
 
 ## Project Structure
 ```
-youtube-transcription-tool/
+ytotxt/
 ├── app.py # Flask application and route handlers
 ├── yttotxt.py # Core transcription and YouTube download logic
 ├── requirements.txt # Python package dependencies
