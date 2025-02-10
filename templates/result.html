@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Transcription Result</title>
+    <title>{{ video_title if video_title else 'Transcription Result' }}</title>
     <style>
         body {
             margin: 0;
@@ -258,7 +258,7 @@
         </div>
         
         <div class="main-content">
-            <h1>Transcription Result</h1>
+            <h1>{{ video_title }}</h1>
             <div class="video-info">
                 <p>YouTube URL: <a href="{{ youtube_url }}" target="_blank">{{ youtube_url }}</a></p>
             </div>

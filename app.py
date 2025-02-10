@@ -54,6 +54,7 @@ def show_result():
     transcript = session.get('transcript')
     youtube_url = session.get('youtube_url')
     video_id = session.get('video_id')
+    video_title = session.get('video_title')
     
     if not all([transcript, youtube_url, video_id]):
         return redirect(url_for('index'))
@@ -61,6 +62,7 @@ def show_result():
     return render_template('result.html', 
                          transcript=transcript, 
                          youtube_url=youtube_url,
+                         video_title=video_title,
                          transcribed_files=get_transcribed_files())
 
 @app.route('/new', methods=['POST'])
