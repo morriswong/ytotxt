@@ -36,8 +36,8 @@ Before you begin, ensure you have the following installed:
 
 2. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd youtube-transcription-tool
+   git clone https://github.com/morriswong/ytotxt.git
+   cd ytotxt
    ```
 
 3. **Create and activate a virtual environment**:
