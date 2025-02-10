@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>YouTube Transcription</title>
+    <title>ytotxt - YouTube to Text</title>
     <style>
         body {
             margin: 0;
@@ -104,8 +104,8 @@
         }
         
         .step.active {
-            background: #e2f3ff;
-            border-left: 4px solid #0d6efd;
+            background: #ffebeb;
+            border-left: 4px solid #FF0000;
         }
         
         .step.completed {
@@ -121,14 +121,14 @@
         }
         
         .step.success {
-            background: #28a745;
+            background: #FF0000;
             color: white;
             font-weight: bold;
             padding: 20px;
             margin: 20px 0;
             border-radius: 4px;
             text-align: center;
-            border-left: 4px solid #1e7e34;
+            border-left: 4px solid #CC0000;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
@@ -172,15 +172,27 @@
 
         .transcribe-form button {
             padding: 8px 16px;
-            background: #4CAF50;
+            background: #FF0000;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
         .transcribe-form button:hover {
-            background: #45a049;
+            background: #CC0000;
+        }
+
+        .video-id {
+            margin: 5px 0;
+            color: #666;
+            font-family: monospace;
+            font-size: 0.9em;
+            background: #f1f1f1;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
         }
     </style>
 </head>
@@ -201,7 +213,10 @@
         </div>
         
         <div class="main-content">
-            <h1>YouTube Transcription</h1>
+            <h1>ytotxt</h1>
+            <p class="subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px;">
+                YouTube to Text Transcription
+            </p>
             {% with messages = get_flashed_messages() %}
               {% if messages %}
                 <ul style="color:red;">
@@ -221,6 +236,7 @@
             <div id="processingStatus" class="processing-status">
                 <h2>Processing Video</h2>
                 <div id="videoTitle" class="video-title"></div>
+                <div id="videoId" class="video-id"></div>
                 <div class="step" id="stepInfo">
                     Getting video information...
                 </div>
@@ -295,8 +311,9 @@
             fetch('/status')
                 .then(response => response.json())
                 .then(data => {
-                    // Update video title
+                    // Update video title and ID
                     document.getElementById('videoTitle').textContent = data.video_title;
+                    document.getElementById('videoId').textContent = `Video ID: ${data.video_id}`;
                     
                     // Reset all steps first
                     document.querySelectorAll('.step').forEach(step => {

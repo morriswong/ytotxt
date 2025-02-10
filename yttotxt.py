@@ -8,9 +8,11 @@ def get_video_info(url):
     ydl_opts = {}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=False)
+    match = re.search(r'(?:v=|youtu\.be/)([^&\?]+)', url)
+    video_id = match.group(1) if match else url.split("v=")[-1]
     return {
         'title': info_dict['title'],
-        'id': url.split("v=")[-1]
+        'id': video_id
     }
 
 def transcribe_youtube(url, update_status=None):
@@ -28,6 +30,7 @@ def transcribe_youtube(url, update_status=None):
         video_dir = downloads_dir / video_id
         video_dir.mkdir(parents=True, exist_ok=True)
         
+        # Signal that we're starting the download
         if update_status:
             update_status('downloading', video_title)
         
@@ -50,6 +53,7 @@ def transcribe_youtube(url, update_status=None):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             error_code = ydl.download(url)
         
+        # Signal that we're starting transcription
         if update_status:
             update_status('transcribing', video_title)
         
@@ -72,10 +76,12 @@ def transcribe_youtube(url, update_status=None):
         with open(txt_path, 'w', encoding='utf-8') as f:
             f.write(transcript_with_metadata)
         
+        # Signal completion
         if update_status:
             update_status('completed', video_title)
         
         return transcript_with_metadata
+        
     except Exception as e:
         if update_status:
             update_status('error', str(e))

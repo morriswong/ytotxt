@@ -103,18 +103,21 @@ def transcribe():
             def update_status(status, title):
                 session['status'] = status
                 session['video_title'] = title
+                session.modified = True  # Important: tells Flask the session was modified
                 
             # Store initial state in session
             session['status'] = 'info'
             session['video_title'] = video_title
             session['youtube_url'] = youtube_url
             session['video_id'] = video_id
+            session.modified = True
             
             # Download and transcribe
             transcript = yttotxt.transcribe_youtube(youtube_url, update_status)
             
             # Store final result
             session['transcript'] = transcript
+            session.modified = True
             
             return jsonify({
                 'status': 'success',
@@ -133,7 +136,8 @@ def get_status():
     return jsonify({
         'status': session.get('status', 'idle'),
         'video_title': session.get('video_title', ''),
-        'youtube_url': session.get('youtube_url', '')
+        'youtube_url': session.get('youtube_url', ''),
+        'video_id': session.get('video_id', '')
     })
 
 if __name__ == '__main__':
