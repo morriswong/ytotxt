@@ -3,6 +3,7 @@ import yttotxt
 import logging
 from pathlib import Path
 import os
+import re
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a secure random key
@@ -88,57 +89,98 @@ def clear_session():
 def download_file(filename):
     return send_from_directory('downloads', filename)
 
+def extract_video_id(url):
+    """Extract video ID from various YouTube URL formats"""
+    if 'youtu.be' in url:
+        # Handle shortened URLs like https://youtu.be/VIDEO_ID
+        video_id = url.split('youtu.be/')[-1].split('?')[0]
+    else:
+        # Handle standard URLs like https://www.youtube.com/watch?v=VIDEO_ID
+        video_id = url.split('v=')[-1].split('&')[0]
+    return video_id
+
+def is_valid_youtube_url(url):
+    """Validate YouTube URL format"""
+    youtube_regex = (
+        r'(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[a-zA-Z0-9_-]{11}.*'
+    )
+    return bool(re.match(youtube_regex, url))
+
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
     youtube_url = request.form.get('url')
-    if youtube_url:
-        try:
-            # Start the transcription process
-            video_id = youtube_url.split("v=")[-1]
-            
-            # Get video info first
-            video_info = yttotxt.get_video_info(youtube_url)
-            video_title = video_info['title']
-            
-            def update_status(status, title):
-                session['status'] = status
-                session['video_title'] = title
-                session.modified = True  # Important: tells Flask the session was modified
-                
-            # Store initial state in session
-            session['status'] = 'info'
-            session['video_title'] = video_title
-            session['youtube_url'] = youtube_url
-            session['video_id'] = video_id
-            session.modified = True
-            
-            # Download and transcribe
-            transcript = yttotxt.transcribe_youtube(youtube_url, update_status)
-            
-            # Store final result
-            session['transcript'] = transcript
-            session.modified = True
-            
-            return jsonify({
-                'status': 'success',
-                'redirect': url_for('show_result')
-            })
-        except Exception as e:
-            app.logger.error(f"Error processing video: {str(e)}")
-            return jsonify({
-                'status': 'error',
-                'message': str(e)
-            }), 400
+    if not youtube_url:
+        return jsonify({
+            'status': 'error',
+            'message': 'Please enter a YouTube URL'
+        }), 400
+        
+    if not is_valid_youtube_url(youtube_url):
+        return jsonify({
+            'status': 'error',
+            'message': 'Please enter a valid YouTube URL'
+        }), 400
+        
+    try:
+        # Get video info first
+        video_id = extract_video_id(youtube_url)
+        video_info = yttotxt.get_video_info(youtube_url)
+        video_title = video_info['title']
+        
+        # Store info in session
+        session['video_id'] = video_id
+        session['video_title'] = video_title
+        session['youtube_url'] = youtube_url
+        session.modified = True
+        
+        # Process the video
+        transcript = yttotxt.transcribe_youtube(youtube_url, None)  # No need for status updates now
+        
+        # Store final result
+        session['transcript'] = transcript
+        session.modified = True
+        
+        return jsonify({
+            'status': 'success',
+            'redirect': url_for('show_result')
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error processing video: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 400
+    
     return jsonify({'status': 'error', 'message': 'No URL provided'}), 400
 
 @app.route('/status')
 def get_status():
+    status = session.get('status', 'idle')
+    app.logger.debug(f"Current status: {status}")
     return jsonify({
-        'status': session.get('status', 'idle'),
+        'status': status,
         'video_title': session.get('video_title', ''),
-        'youtube_url': session.get('youtube_url', ''),
-        'video_id': session.get('video_id', '')
+        'video_id': session.get('video_id', ''),
+        'youtube_url': session.get('youtube_url', '')
     })
+
+@app.route('/delete-all')
+def delete_all_transcripts():
+    try:
+        downloads_dir = Path('downloads')
+        if downloads_dir.exists():
+            # Delete all contents of downloads directory
+            for item in downloads_dir.iterdir():
+                if item.is_dir():
+                    for subitem in item.iterdir():
+                        subitem.unlink()  # Delete files inside subdirectories
+                    item.rmdir()  # Delete empty directory
+        # Recreate downloads directory
+        downloads_dir.mkdir(exist_ok=True)
+    except Exception as e:
+        flash(f'Error deleting transcripts: {str(e)}')
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     # Ensure downloads directory exists

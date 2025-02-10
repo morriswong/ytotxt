@@ -2,14 +2,20 @@ import re
 import yt_dlp
 import whisper
 from pathlib import Path
+import time
 
 def get_video_info(url):
     """Get video information without downloading"""
     ydl_opts = {}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=False)
-    match = re.search(r'(?:v=|youtu\.be/)([^&\?]+)', url)
-    video_id = match.group(1) if match else url.split("v=")[-1]
+    
+    # Extract clean video ID
+    if 'youtu.be' in url:
+        video_id = url.split('youtu.be/')[-1].split('?')[0]
+    else:
+        video_id = url.split('v=')[-1].split('&')[0]
+        
     return {
         'title': info_dict['title'],
         'id': video_id
@@ -17,24 +23,21 @@ def get_video_info(url):
 
 def transcribe_youtube(url, update_status=None):
     try:
-        # Get video information
+        # Get video info
         info_dict = get_video_info(url)
         video_title = info_dict['title']
         video_id = info_dict['id']
         
-        if update_status:
-            update_status('info', video_title)
-        
-        # Create directory for this video
+        # Create directory
         downloads_dir = Path('downloads')
         video_dir = downloads_dir / video_id
         video_dir.mkdir(parents=True, exist_ok=True)
         
-        # Signal that we're starting the download
+        # Start downloading
         if update_status:
             update_status('downloading', video_title)
-        
-        # Setup download options
+            
+        # Download audio
         ydl_opts = {
             'format': 'm4a/bestaudio/best',
             'noplaylist': True,
@@ -49,36 +52,29 @@ def transcribe_youtube(url, update_status=None):
             'keepvideo': False
         }
         
-        # Download the audio
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            error_code = ydl.download(url)
+            ydl.download(url)
         
-        # Signal that we're starting transcription
+        # Start transcribing
         if update_status:
             update_status('transcribing', video_title)
-        
-        # Transcribe audio using Whisper
+            
+        # Transcribe audio
         mp3_path = video_dir / f"{video_id}.mp3"
         model = whisper.load_model("base")
-        result = model.transcribe(str(mp3_path), verbose=True, word_timestamps=True)
+        result = model.transcribe(str(mp3_path))
         
-        # Format transcript with timestamps
+        # Format and save transcript
         transcript_text = '\n'.join([
             f"[{result['segments'][i]['start']} ---> {result['segments'][i]['end']}]  {result['segments'][i]['text']}"
             for i in range(len(result['segments']))
         ])
         
-        # Add video title and URL at the beginning of transcript
         transcript_with_metadata = f"Title: {video_title}\nURL: {url}\n\nTranscript:\n{transcript_text}"
         
-        # Save the transcript to a text file
         txt_path = video_dir / f"{video_id}.txt"
         with open(txt_path, 'w', encoding='utf-8') as f:
             f.write(transcript_with_metadata)
-        
-        # Signal completion
-        if update_status:
-            update_status('completed', video_title)
         
         return transcript_with_metadata
         
