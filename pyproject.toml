@@ -1,0 +1,8 @@
+[project]
+name = "ytotxt"
+requires-python = ">=3.9"
+dependencies = [
+    "flask",
+    "yt-dlp",
+    "openai-whisper==20240930"
+] 

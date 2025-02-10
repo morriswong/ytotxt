@@ -1,3 +1,4 @@
+# Requires Python 3.9+
 flask
 yt-dlp
 openai-whisper==20240930
