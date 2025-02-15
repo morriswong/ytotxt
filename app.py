@@ -184,6 +184,14 @@ def delete_all_transcripts():
         flash(f'Error deleting transcripts: {str(e)}')
     return redirect(url_for('index'))
 
+@app.route('/result/<video_id>')
+def result(video_id):
+    # Retrieve the transcript data from the database or storage
+    transcript_data = Transcript.query.get(video_id)
+    
+    # Render the results page with the transcript data
+    return render_template('result.html', video_title=transcript_data.title, transcript=transcript_data.transcript, youtube_url=transcript_data.youtube_url)
+
 if __name__ == '__main__':
     # Ensure downloads directory exists
     Path('downloads').mkdir(exist_ok=True)
